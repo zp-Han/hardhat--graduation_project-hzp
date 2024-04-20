@@ -8,6 +8,7 @@
       <p>开销：{{ behaviorInfo.expenses}} 元</p>
       <p>时间：{{ behaviorInfo.timestamp }}</p>
     </div>
+<<<<<<< HEAD
     <div v-else>
       <p>加载中...</p>
     </div>
@@ -34,6 +35,22 @@ async function getBehavior() {
       console.error(error);
       return null;
     }
+=======
+    
+  </template>
+  
+  <script setup>
+  // 在这里获取并展示从区块链上获取的学生行为信息
+  </script>
+  
+  <style scoped>
+  .container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+>>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
   }
 }
 

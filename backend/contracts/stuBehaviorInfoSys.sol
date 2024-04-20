@@ -123,6 +123,7 @@ contract stuBehaviorInfoSys {
     function getMyBasicInfo()
         public
         view
+<<<<<<< HEAD
         returns (
             uint256 studentId,
             string memory name,
@@ -134,6 +135,13 @@ contract stuBehaviorInfoSys {
         StudentInfo storage info = studentInfos[msg.sender];
         require(myInfo.studentId != 0, "You are not registered");
         return (myInfo.studentId, myInfo.name, myInfo.className, info.faculty);
+=======
+        returns (uint256 studentId, string memory name, string memory className)
+    {
+        Student memory myInfo = students[msg.sender];
+        require(myInfo.studentId != 0, "You are not registered");
+        return (myInfo.studentId, myInfo.name, myInfo.className);
+>>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
     }
 
     function isRegistered() public view returns (bool) {

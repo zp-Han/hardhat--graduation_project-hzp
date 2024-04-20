@@ -1,7 +1,11 @@
 <template>
     <v-app class="v-app">
         <v-navigation-drawer app>
+<<<<<<< HEAD
             <v-list class=".v-list">
+=======
+            <v-list>
+>>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
                     <v-list-item  @click="PIshow" value="profile">个人信息</v-list-item>
                     <v-list-item @click="BSshow" value="submit">提交行为信息</v-list-item>
                    <v-list-item  @click="BVshow" value="view">查看行为信息</v-list-item>
@@ -35,7 +39,10 @@ function PIshow(){
 .v-app{
     background-color:antiquewhite;
 }
+<<<<<<< HEAD
 .v-list{
     background-color: bisque;
 }
+=======
+>>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
 </style>

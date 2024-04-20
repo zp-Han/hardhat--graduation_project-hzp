@@ -142,11 +142,14 @@ export const abi = [
                 internalType: "string",
                 name: "className",
                 type: "string",
+<<<<<<< HEAD
             },
             {
                 internalType: "string",
                 name: "faculty",
                 type: "string",
+=======
+>>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
             },
         ],
         stateMutability: "view",

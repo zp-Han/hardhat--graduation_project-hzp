@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "axios": "^1.6.8",
+<<<<<<< HEAD
     "chart.js": "^3.0.0",
+=======
+>>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
     "ethers": "5.7",
     "prettier": "^3.2.5",
     "vue": "^3.4.21",
