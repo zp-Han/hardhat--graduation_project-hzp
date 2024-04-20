@@ -4,15 +4,7 @@
       <h1>行为可视化展示</h1>
       <!-- 这里放置行为信息的可视化展示 -->
     </div>
-  <v-app>
-    <v-container>
-      <v-autocomplete
-        clearable
-        label="Autocomplete"
-        :items="['California', 'Colorado', 'Florida', 'Georgia', 'Texas', 'Wyoming']"
-      ></v-autocomplete>
-    </v-container>
-  </v-app>
+    
   </template>
   
   <script setup>

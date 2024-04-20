@@ -25,15 +25,15 @@ const { ethers } = require("hardhat")
 
 async function main() {
     const StuBehaviorInfoSysFactory =
-        await ethers.getContractFactory("stuBehaviorInfoSys")
+        await ethers.getContractFactory("stuBehaviorInfoSys") // 确保合约名称正确
     console.log("正在部署合约...")
     const stuBehaviorInfoSys = await StuBehaviorInfoSysFactory.deploy()
 
     // 等待合约部署完成
-    await stuBehaviorInfoSys.waitForDeployment()
+    await stuBehaviorInfoSys.waitForDeployment() // 这里应该使用 .deployed() 而不是 .waitForDeployment()
 
     // 输出合约地址
-    console.log("合约部署完成:", stuBehaviorInfoSys.target)
+    console.log("合约部署完成:", await stuBehaviorInfoSys.getAddress()) // 使用 .address 来获取合约地址
 }
 
 main()

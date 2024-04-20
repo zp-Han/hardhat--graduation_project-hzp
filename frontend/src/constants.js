@@ -45,49 +45,6 @@ export const abi = [
                 type: "uint256",
             },
         ],
-        name: "BehaviorInfo",
-        type: "event",
-    },
-    {
-        anonymous: false,
-        inputs: [
-            {
-                indexed: true,
-                internalType: "address",
-                name: "student",
-                type: "address",
-            },
-            {
-                indexed: false,
-                internalType: "uint256",
-                name: "timestamp",
-                type: "uint256",
-            },
-            {
-                indexed: false,
-                internalType: "uint256",
-                name: "studyHours",
-                type: "uint256",
-            },
-            {
-                indexed: false,
-                internalType: "uint256",
-                name: "expenses",
-                type: "uint256",
-            },
-            {
-                indexed: false,
-                internalType: "uint256",
-                name: "exerciseHours",
-                type: "uint256",
-            },
-            {
-                indexed: false,
-                internalType: "uint256",
-                name: "sleepHours",
-                type: "uint256",
-            },
-        ],
         name: "BehaviorSubmitted",
         type: "event",
     },
@@ -168,44 +125,23 @@ export const abi = [
         type: "function",
     },
     {
-        inputs: [
-            {
-                internalType: "address",
-                name: "_student",
-                type: "address",
-            },
-            {
-                internalType: "uint256",
-                name: "_timestamp",
-                type: "uint256",
-            },
-        ],
-        name: "getBehaviorInfo",
+        inputs: [],
+        name: "getMyBasicInfo",
         outputs: [
             {
                 internalType: "uint256",
-                name: "",
+                name: "studentId",
                 type: "uint256",
             },
             {
-                internalType: "uint256",
-                name: "",
-                type: "uint256",
+                internalType: "string",
+                name: "name",
+                type: "string",
             },
             {
-                internalType: "uint256",
-                name: "",
-                type: "uint256",
-            },
-            {
-                internalType: "uint256",
-                name: "",
-                type: "uint256",
-            },
-            {
-                internalType: "uint256",
-                name: "",
-                type: "uint256",
+                internalType: "string",
+                name: "className",
+                type: "string",
             },
         ],
         stateMutability: "view",
@@ -214,32 +150,68 @@ export const abi = [
     {
         inputs: [
             {
-                internalType: "address",
-                name: "_student",
-                type: "address",
+                internalType: "uint256",
+                name: "_timestamp",
+                type: "uint256",
             },
         ],
-        name: "getStudentInfo",
+        name: "getMyBehavior",
         outputs: [
             {
                 internalType: "uint256",
-                name: "",
+                name: "timestamp",
                 type: "uint256",
             },
             {
+                internalType: "uint256",
+                name: "studyHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "expenses",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "exerciseHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "sleepHours",
+                type: "uint256",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "getMyStudentInfo",
+        outputs: [
+            {
                 internalType: "string",
-                name: "",
+                name: "faculty",
                 type: "string",
             },
             {
-                internalType: "string",
-                name: "",
-                type: "string",
+                internalType: "uint256[]",
+                name: "behaviorTimestamps",
+                type: "uint256[]",
             },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "isRegistered",
+        outputs: [
             {
-                internalType: "string",
+                internalType: "bool",
                 name: "",
-                type: "string",
+                type: "bool",
             },
         ],
         stateMutability: "view",
@@ -271,25 +243,6 @@ export const abi = [
         name: "register",
         outputs: [],
         stateMutability: "nonpayable",
-        type: "function",
-    },
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "",
-                type: "address",
-            },
-        ],
-        name: "studentInfos",
-        outputs: [
-            {
-                internalType: "string",
-                name: "faculty",
-                type: "string",
-            },
-        ],
-        stateMutability: "view",
         type: "function",
     },
     {

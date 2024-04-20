@@ -1,38 +1,109 @@
-<template> 
-<h1>登录页面</h1>
-<br>
-<button @click="connect()">{{ msg }}</button>
-<button @click="register()">注册</button>
+<template>
+    <v-app>
+        <v-main>
+            <v-container class="fill-height" fluid>
+                <v-row justify="center" align="center">
+                    <v-col cols="12" sm="8" md="6" lg="4" xl="3">
+                        <v-card class="login-card mx-auto" outlined>
+                            <v-card-title class="text-h5 text-center"
+                                >登录</v-card-title
+                            >
+                            <v-card-text>
+                                <v-btn
+                                    class="login-btn"
+                                    depressed
+                                    @click="login()"
+                                    block
+                                    >{{ loginMsg }}</v-btn
+                                >
+                                <v-btn
+                                    class="register-btn"
+                                    text
+                                    @click="register()"
+                                    block
+                                    >注册</v-btn
+                                >
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+            </v-container>
+        </v-main>
+    </v-app>
 </template>
+
 <script setup>
-import { useRouter } from 'vue-router';
-import { ref } from 'vue'
+import { ref } from "vue"
+import { useRouter } from "vue-router"
+import { ethers } from "ethers"
+import { abi, contractAddress } from "../constants" // 导入合约地址和ABI
+
 const router = useRouter()
-let msg = ref('Connect')
-async function connect() {
+const loginMsg = ref("通过 MetaMask 登录")
+
+async function login() {
     if (typeof window.ethereum !== "undefined") {
-        await window.ethereum.request({ method: "eth_requestAccounts" })
-        msg.value = "Connected!"
-        // setTimeout(()=>{
-        //     router.push('/BehaviorSubmission')
-        // },1000)
-        // window.location.href = "./accountBinding.html"
+        try {
+            await window.ethereum.request({ method: "eth_requestAccounts" })
+            const provider = new ethers.providers.Web3Provider(window.ethereum)
+            const contract = new ethers.Contract(contractAddress, abi, provider)
+            const registered = await contract.isRegistered()
+
+            if (!registered) {
+                loginMsg.value = "未注册"
+            } else {
+                loginMsg.value = "已登录"
+                router.push("/main")
+            }
+        } catch (error) {
+            console.error(error)
+            alert("发生错误，请查看控制台")
+        }
     } else {
-        // msg.value = "please install metamask!"
-        msg.value = 'please install metamask!';
+        alert("请安装 MetaMask!")
     }
 }
-function register(){
-    if(msg.value!=="Connected"){
-        router.push('/AccountRegistration')
-    }  
+
+function register() {
+    router.push("/accountRegistration")
 }
 </script>
+
 <style scoped>
-h1{
-    text-align: center;
+.v-application {
+    background-image: url("../pic1.png"); /* 替换为你的图片路径 */
+    background-size: cover; /* 图片铺满整个容器 */
+    background-position: center; /* 图片居中显示 */
 }
-button{
-    margin:  5px;
+.login-card {
+    background: rgba(250, 250, 250, 0.7); /* 卡片背景透明度 */
+    border-radius: 10px;
+    max-width: 500px; /* 调整卡片最大宽度 */
+    height: auto; /* 根据内容自动调整高度 */
+}
+.login-btn {
+    color: white;
+    background-color: #1976d2; /* 调整为你喜欢的颜色 */
+    margin-bottom: 16px; /* 按钮间距 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 48px; /* 或者其他你想要的高度 */
+}
+.register-btn {
+    color: #1976d2; /* 调整为你喜欢的颜色 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 48px; /* 或者其他你想要的高度 */
+}
+.v-application--wrap {
+    min-height: 0 !important;
+}
+.v-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>
