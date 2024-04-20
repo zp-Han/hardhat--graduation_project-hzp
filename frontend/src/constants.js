@@ -143,6 +143,11 @@ export const abi = [
                 name: "className",
                 type: "string",
             },
+            {
+                internalType: "string",
+                name: "faculty",
+                type: "string",
+            },
         ],
         stateMutability: "view",
         type: "function",

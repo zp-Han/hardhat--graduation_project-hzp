@@ -1,64 +1,111 @@
-<!-- BehaviorSubmission.vue -->
 <template>
-    <div class="container">
-        <h1>行为提交</h1>
-        <div class="input-group">
-            <textarea
-                v-model="behavior"
-                placeholder="请输入行为信息"
-            ></textarea>
-        </div>
-        <button @click="submitBehavior" class="btn">提交</button>
-    </div>
-</template>
+    <v-container>
+      <h1 class="text-center">行为提交</h1>
+      <v-form @submit.prevent="submitBehavior">
+        <!-- 不再需要输入行为信息的描述字段，直接传入时间戳 -->
+        
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="behavior.studyHours"
+              label="学习小时数"
+              outlined
+              type="number"
+              required
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="behavior.expenses"
+              label="开销"
+              outlined
+              type="number"
+              required
+            ></v-text-field>
+          </v-col>
+        </v-row>
+  
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="behavior.exerciseHours"
+              label="运动小时数"
+              outlined
+              type="number"
+              required
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="behavior.sleepHours"
+              label="睡眠小时数"
+              outlined
+              type="number"
+              required
+            ></v-text-field>
+          </v-col>
+        </v-row>
+  
+        <v-btn type="submit" color="primary" class="mt-4">提交</v-btn>
+      </v-form>
+    </v-container>
+  </template>
+  
+  <script setup>
+  import { ref } from "vue";
+  import { ethers } from "ethers";
+  import { abi, contractAddress } from "../constants";
+  
 
-<script setup>
-import { ref } from "vue"
-import { useRouter } from "vue-router"
+  const behavior = ref({
+    studyHours: 0,
+    expenses: 0,
+    exerciseHours: 0,
+    sleepHours: 0
+  });
 
-const behavior = ref("")
-const router = useRouter()
-
-function submitBehavior() {
-    router.push("/Login")
+function getNowTime(){
+    const timestamp = Date.now();
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formattedTimestamp = `${year}${month}${day}`;
+    return formattedTimestamp;
 }
-</script>
+  async function submitBehavior() {
+    if (typeof window.ethereum !== "undefined") {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      const formattedTimestamp = getNowTime();
+      try {
+        // 获取时间
 
-<style scoped>
-.container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.input-group {
-    margin-bottom: 15px;
-}
-
-textarea {
-    width: 100%;
-    height: 150px;
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.btn {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.btn:hover {
-    background-color: #0056b3;
-}
-</style>
+        const transactionResponse = await contract.submitBehavior(
+        formattedTimestamp,  // 将时间戳作为第一个参数传入
+        Number(behavior.value.studyHours),
+        Number(behavior.value.expenses),
+        Number(behavior.value.exerciseHours),
+        Number(behavior.value.sleepHours)
+        );
+        await transactionResponse.wait();
+        alert("信息已经提交！");
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+  </script>
+  
+  <style scoped>
+  .text-center {
+    text-align: center;
+  }
+  
+  .mt-4 {
+    margin-top: 1.5rem;
+  }
+  </style>
+  

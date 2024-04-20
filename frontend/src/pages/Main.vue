@@ -1,7 +1,7 @@
 <template>
     <v-app class="v-app">
         <v-navigation-drawer app>
-            <v-list>
+            <v-list class=".v-list">
                     <v-list-item  @click="PIshow" value="profile">个人信息</v-list-item>
                     <v-list-item @click="BSshow" value="submit">提交行为信息</v-list-item>
                    <v-list-item  @click="BVshow" value="view">查看行为信息</v-list-item>
@@ -34,5 +34,8 @@ function PIshow(){
 <style scoped>
 .v-app{
     background-color:antiquewhite;
+}
+.v-list{
+    background-color: bisque;
 }
 </style>
