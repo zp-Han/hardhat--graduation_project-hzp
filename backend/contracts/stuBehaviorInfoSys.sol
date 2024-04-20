@@ -1,30 +1,31 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.8;
 
 contract stuBehaviorInfoSys {
-    address public admin; // 合约管理员地址
+    address public admin; // Contract administrator address
 
     struct Student {
-        uint studentId;
+        uint256 studentId;
         string name;
         string className;
     }
 
-    struct StudentInfo {
-        string faculty;
-        mapping(uint => Behavior) behaviors; // 学生行为记录，key为时间戳
-    }
-
     struct Behavior {
         uint timestamp;
-        uint studyHours; // 学习时长（小时）
-        uint expenses; // 消费金额
-        uint exerciseHours; // 运动时长（小时）
-        uint sleepHours; // 睡眠时长（小时）
+        uint studyHours; // Study duration (hours)
+        uint expenses; // Expenses amount
+        uint exerciseHours; // Exercise duration (hours)
+        uint sleepHours; // Sleep duration (hours)
     }
 
-    mapping(address => Student) public students; // 学生地址映射到学生信息
-    mapping(address => StudentInfo) public studentInfos; // 学生地址映射到学生信息
+    struct StudentInfo {
+        string faculty;
+        uint[] behaviorTimestamps; // An array to keep track of behavior timestamps.
+        mapping(uint => Behavior) behaviors; // Student behavior records, key is timestamp
+    }
+
+    mapping(address => Student) public students; // Mapping from student address to Student information
+    mapping(address => StudentInfo) private studentInfos; // Mapping from student address to StudentInfo
 
     event StudentRegistered(
         address indexed student,
@@ -33,15 +34,8 @@ contract stuBehaviorInfoSys {
         string className,
         string faculty
     );
+
     event BehaviorSubmitted(
-        address indexed student,
-        uint timestamp,
-        uint studyHours,
-        uint expenses,
-        uint exerciseHours,
-        uint sleepHours
-    );
-    event BehaviorInfo(
         address indexed student,
         uint timestamp,
         uint studyHours,
@@ -59,7 +53,7 @@ contract stuBehaviorInfoSys {
         admin = msg.sender;
     }
 
-    // 学生注册函数
+    // Student registration function
     function register(
         uint _studentId,
         string memory _name,
@@ -77,20 +71,7 @@ contract stuBehaviorInfoSys {
         );
     }
 
-    // 获取学生本人信息函数
-    function getStudentInfo(
-        address _student
-    ) public view returns (uint, string memory, string memory, string memory) {
-        require(students[_student].studentId != 0, "Student not registered");
-        return (
-            students[_student].studentId,
-            students[_student].name,
-            students[_student].className,
-            studentInfos[_student].faculty
-        );
-    }
-
-    // 学生提交行为记录函数
+    // Function to submit behavior records
     function submitBehavior(
         uint _timestamp,
         uint _studyHours,
@@ -99,13 +80,24 @@ contract stuBehaviorInfoSys {
         uint _sleepHours
     ) public {
         require(students[msg.sender].studentId != 0, "Student not registered");
-        studentInfos[msg.sender].behaviors[_timestamp] = Behavior(
+
+        StudentInfo storage info = studentInfos[msg.sender];
+        for (uint i = 0; i < info.behaviorTimestamps.length; i++) {
+            require(
+                info.behaviorTimestamps[i] != _timestamp,
+                "Behavior info already exists for the given timestamp"
+            );
+        }
+
+        info.behaviors[_timestamp] = Behavior(
             _timestamp,
             _studyHours,
             _expenses,
             _exerciseHours,
             _sleepHours
         );
+        info.behaviorTimestamps.push(_timestamp);
+
         emit BehaviorSubmitted(
             msg.sender,
             _timestamp,
@@ -116,16 +108,62 @@ contract stuBehaviorInfoSys {
         );
     }
 
-    // 获取学生行为信息函数（根据时间）
-    function getBehaviorInfo(
-        address _student,
+    // Function to change contract administrator
+    function changeAdmin(address _newAdmin) public onlyAdmin {
+        admin = _newAdmin;
+    }
+
+    // Function to delete student information (only callable by admin)
+    function deleteStudent(address _student) public onlyAdmin {
+        delete students[_student];
+        delete studentInfos[_student];
+    }
+
+    // Get basic information of the caller
+    function getMyBasicInfo()
+        public
+        view
+        returns (uint256 studentId, string memory name, string memory className)
+    {
+        Student memory myInfo = students[msg.sender];
+        require(myInfo.studentId != 0, "You are not registered");
+        return (myInfo.studentId, myInfo.name, myInfo.className);
+    }
+
+    function isRegistered() public view returns (bool) {
+        return students[msg.sender].studentId != 0;
+    }
+
+    // Get detailed information and behavior timestamps of the caller
+    function getMyStudentInfo()
+        public
+        view
+        returns (string memory faculty, uint[] memory behaviorTimestamps)
+    {
+        require(students[msg.sender].studentId != 0, "You are not registered");
+        StudentInfo storage info = studentInfos[msg.sender];
+        return (info.faculty, info.behaviorTimestamps);
+    }
+
+    // Get a specific behavior record of the caller by timestamp
+    function getMyBehavior(
         uint _timestamp
-    ) public view returns (uint, uint, uint, uint, uint) {
-        Behavior memory behavior = studentInfos[_student].behaviors[_timestamp];
-        require(
-            behavior.timestamp != 0,
-            "Behavior info not found for the given timestamp"
-        );
+    )
+        public
+        view
+        returns (
+            uint timestamp,
+            uint studyHours,
+            uint expenses,
+            uint exerciseHours,
+            uint sleepHours
+        )
+    {
+        require(students[msg.sender].studentId != 0, "You are not registered");
+        Behavior storage behavior = studentInfos[msg.sender].behaviors[
+            _timestamp
+        ];
+        require(behavior.timestamp != 0, "Behavior not found");
         return (
             behavior.timestamp,
             behavior.studyHours,
@@ -133,16 +171,5 @@ contract stuBehaviorInfoSys {
             behavior.exerciseHours,
             behavior.sleepHours
         );
-    }
-
-    // 修改合约管理员函数
-    function changeAdmin(address _newAdmin) public onlyAdmin {
-        admin = _newAdmin;
-    }
-
-    // 删除学生信息函数（仅管理员可调用）
-    function deleteStudent(address _student) public onlyAdmin {
-        delete students[_student];
-        delete studentInfos[_student];
     }
 }

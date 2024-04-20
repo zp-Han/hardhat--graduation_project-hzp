@@ -1,164 +1,108 @@
 <template>
-  <div class="container">
-    <h1>账户注册</h1>
-    <div>
-      <input type="text" v-model="studentName" placeholder="请输入学生姓名">
-      <input type="text" v-model="studentId" placeholder="请输入学生id">
-      <input type="text" v-model="studentGender" placeholder="请输入性别">
-      <input type="text" v-model="studentAge" placeholder="请输入年龄">
-      <input type="text" v-model="studentCollege" placeholder="请输入学院">
-      <input type="text" v-model="studentClass" placeholder="请输入学生班级">
-    </div>
-    <button @click="registerAccount" class="btn">提交</button>
-    <button @click="getStudentInfo" class="btn">提取信息</button>
-  </div>
-  <h4>{{ info }}</h4>
+    <v-container fluid class="fill-height bg" fill-height>
+        <v-row justify="center" align="center">
+            <v-col cols="12" sm="8" md="6" lg="4">
+                <v-card class="elevation-12 pa-5" outlined>
+                    <h1 class="text-center mb-5">账户注册</h1>
+                    <v-form>
+                        <v-text-field
+                            v-model="studentName"
+                            label="学生姓名"
+                            outlined
+                            dense
+                        ></v-text-field>
+                        <v-text-field
+                            v-model="studentId"
+                            label="学生ID"
+                            outlined
+                            dense
+                        ></v-text-field>
+                        <v-text-field
+                            v-model="studentClass"
+                            label="学生班级"
+                            outlined
+                            dense
+                        ></v-text-field>
+                        <v-text-field
+                            v-model="studentCollege"
+                            label="学院"
+                            outlined
+                            dense
+                        ></v-text-field>
+                        <v-btn
+                            color="primary"
+                            class="mr-4 mt-5"
+                            @click="registerAccount"
+                            block
+                        >
+                            提交
+                        </v-btn>
+                    </v-form>
+                </v-card>
+            </v-col>
+        </v-row>
+    </v-container>
 </template>
 
 <script setup>
-// import { useRouter } from 'vue-router';
-import { ref } from 'vue';
-import { ethers } from 'ethers'
-import {abi,contractAddress} from '../constants'
+import { ref } from "vue"
+import { ethers } from "ethers"
+import { abi, contractAddress } from "../constants"
+import { useRouter } from "vue-router"
 
+const router = useRouter()
 
-// const router = useRouter()
-let studentName = ref('')
-let studentId = ref('')
-let studentGender = ref('')
-let studentAge = ref('')
-let studentCollege = ref('')
-let studentClass = ref('')
-let info = ref()
+let studentName = ref("")
+let studentId = ref("")
+let studentClass = ref("")
+let studentCollege = ref("")
 
-// async function registerAccount(){
-//   let signer = null;
-//   let provider;
-//   if (window.ethereum == null) {
-//   console.log("MetaMask not installed; using read-only defaults")
-//   provider = ethers.getDefaultProvider()
-// } else {
-//   provider = new ethers.BrowserProvider(window.ethereum)
-//   signer = await provider.getSigner();
-//     const contract = new ethers.Contract(contractAddress,abi,signer)
-//     try{
-//       const transactionResponse = await contract.register(
-//       studentName.value,
-//       studentId.value,
-//       studentGender.value,
-//       studentClass.value,
-//       studentCollege.value)
-//       await listenForTransaction(transactionResponse,provider)
-//       console.log('Done')
-//       alert('信息已经提交！')
-//   }catch(error){
-//       console.log(error);
-//     }
-//   }
-//   block.value = await provider.getBlockNumber();
-// };
-// function listenForTransaction(transactionResponse,provider){
-//   return new Promise((resolve,reject)=>{
-//     provider.once(transactionResponse.hash,(transactionRecipt)=>{
-//     console.log(transactionRecipt)
-//   })
-//   resolve()
-//   })
-// }
-// function usegetInformation(){
-//   const provider = new ethers.BrowserProvider(window.ethereum)
-//   const information = ethers.getTransation(contractAddress)
-//   console.log(information)
-// }
 async function registerAccount() {
-  let signer = null;
-  let provider;
-  if (window.ethereum == null) {
-    console.log("MetaMask not installed; using read-only defaults")
-    provider = ethers.getDefaultProvider();
-  } else {
-    provider = new ethers.BrowserProvider(window.ethereum); // Request user's permission to connect
-    signer = provider.getSigner();
-    const contract = new ethers.Contract(contractAddress, abi, signer);
-    try {
-      const transactionResponse = await contract.register(
-        studentId.value,
-        studentName.value,
-        studentClass.value,
-        studentCollege.value
-      );
-      await listenForTransaction(transactionResponse, provider);
-      console.log('Done');
-      alert('信息已经提交！');
-    } catch (error) {
-      console.log(error);
+    if (typeof window.ethereum === "undefined") {
+        alert("MetaMask is not installed")
+        return
     }
-  }
-}
 
-function listenForTransaction(transactionResponse, provider) {
-  return new Promise((resolve, reject) => {
-    provider.once(transactionResponse.hash, (transactionReceipt) => {
-      console.log(transactionReceipt);
-      resolve();
-    });
-  });
-}
-async function getStudentInfo() {
-  let provider;
-  if (window.ethereum == null) {
-    console.log("MetaMask not installed; using read-only defaults")
-    provider = ethers.getDefaultProvider();
-  } else {
-    provider = new ethers.BrowserProvider(window.ethereum)
-    const contract = new ethers.Contract(contractAddress, abi, provider);
+    await window.ethereum.request({ method: "eth_requestAccounts" })
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
+    const contract = new ethers.Contract(contractAddress, abi, signer)
+
     try {
-      info.value = await contract.getStudentInfo(studentId.value);
-      console.log('Student Info:', studentInfo);
-      // Display or process the student information as needed
+        const transactionResponse = await contract.register(
+            Number(studentId.value),
+            studentName.value,
+            studentClass.value,
+            studentCollege.value,
+        )
+        await transactionResponse.wait()
+        alert("信息已经提交！")
+        router.push("/login")
     } catch (error) {
-      console.log(error);
+        console.error(error)
+        alert("提交失败，请检查控制台了解详情。")
     }
-  }
 }
-
-
 </script>
 
 <style scoped>
-.container {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+.bg {
+    background-image: linear-gradient(
+        to right top,
+        #d16ba5,
+        #c777b9,
+        #ba83ca,
+        #aa8fd8,
+        #9a9ae1
+    );
+    height: 100vh;
 }
 
-input {
-  margin-bottom: 15px;
+.v-card {
+    border-radius: 15px;
 }
 
-input[type="text"] {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.btn {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  color: #fff;
-  background-color: #007bff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background-color: #0056b3;
+.text-center {
+    text-align: center;
 }
 </style>
