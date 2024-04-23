@@ -1,14 +1,11 @@
 <template>
     <v-app class="v-app">
         <v-navigation-drawer app>
-<<<<<<< HEAD
             <v-list class=".v-list">
-=======
-            <v-list>
->>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
-                    <v-list-item  @click="PIshow" value="profile">个人信息</v-list-item>
-                    <v-list-item @click="BSshow" value="submit">提交行为信息</v-list-item>
-                   <v-list-item  @click="BVshow" value="view">查看行为信息</v-list-item>
+                <v-list-item @click="PIshow" value="profile">个人信息</v-list-item>
+                <v-list-item @click="BSshow" value="submit">提交行为信息</v-list-item>
+                <v-list-item @click="BVshow" value="view">查看行为信息</v-list-item>
+                <v-list-item @click="VEshow" value="view">验证</v-list-item>
             </v-list>
         </v-navigation-drawer>
 
@@ -21,28 +18,34 @@
 </template>
 
 <script setup>
-import { RouterView,useRouter} from "vue-router"
-const router = useRouter()
+import { RouterView, useRouter} from "vue-router";
+const router = useRouter();
 
-function BSshow(){
+
+function BSshow() {
     router.push({name:'BS'});
 }
-function BVshow(){
+
+function BVshow() {
     router.push({name:'BV'});
 }
-function PIshow(){
+
+function PIshow() {
     router.push({name:'PI'});
 }
+
+function VEshow() {
+    router.push({name:'VE'});
+}
+
 </script>
 
 <style scoped>
-.v-app{
-    background-color:antiquewhite;
+.v-app {
+    background-color: antiquewhite;
 }
-<<<<<<< HEAD
-.v-list{
+
+.v-list {
     background-color: bisque;
 }
-=======
->>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
 </style>

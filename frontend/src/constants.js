@@ -53,6 +53,55 @@ export const abi = [
         inputs: [
             {
                 indexed: true,
+                internalType: "uint256",
+                name: "proposalId",
+                type: "uint256",
+            },
+            {
+                indexed: true,
+                internalType: "address",
+                name: "creator",
+                type: "address",
+            },
+            {
+                indexed: false,
+                internalType: "uint256",
+                name: "timestamp",
+                type: "uint256",
+            },
+            {
+                indexed: false,
+                internalType: "uint256",
+                name: "studyHours",
+                type: "uint256",
+            },
+            {
+                indexed: false,
+                internalType: "uint256",
+                name: "expenses",
+                type: "uint256",
+            },
+            {
+                indexed: false,
+                internalType: "uint256",
+                name: "exerciseHours",
+                type: "uint256",
+            },
+            {
+                indexed: false,
+                internalType: "uint256",
+                name: "sleepHours",
+                type: "uint256",
+            },
+        ],
+        name: "ProposalCreated",
+        type: "event",
+    },
+    {
+        anonymous: false,
+        inputs: [
+            {
+                indexed: true,
                 internalType: "address",
                 name: "student",
                 type: "address",
@@ -86,8 +135,31 @@ export const abi = [
         type: "event",
     },
     {
+        anonymous: false,
+        inputs: [
+            {
+                indexed: true,
+                internalType: "uint256",
+                name: "proposalId",
+                type: "uint256",
+            },
+            {
+                indexed: false,
+                internalType: "bool",
+                name: "proposalResult",
+                type: "bool",
+            },
+        ],
+        name: "VotingEnded",
+        type: "event",
+    },
+    {
+        stateMutability: "payable",
+        type: "fallback",
+    },
+    {
         inputs: [],
-        name: "admin",
+        name: "chairman",
         outputs: [
             {
                 internalType: "address",
@@ -102,11 +174,11 @@ export const abi = [
         inputs: [
             {
                 internalType: "address",
-                name: "_newAdmin",
+                name: "_newChairman",
                 type: "address",
             },
         ],
-        name: "changeAdmin",
+        name: "changeChairman",
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",
@@ -114,12 +186,58 @@ export const abi = [
     {
         inputs: [
             {
-                internalType: "address",
-                name: "_student",
-                type: "address",
+                internalType: "uint256",
+                name: "_timestamp",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "_studyHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "_expenses",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "_exerciseHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "_sleepHours",
+                type: "uint256",
+            },
+        ],
+        name: "createProposal",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "_studentId",
+                type: "uint256",
             },
         ],
         name: "deleteStudent",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "_proposalId",
+                type: "uint256",
+            },
+        ],
+        name: "endVoting",
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",
@@ -142,14 +260,11 @@ export const abi = [
                 internalType: "string",
                 name: "className",
                 type: "string",
-<<<<<<< HEAD
             },
             {
                 internalType: "string",
                 name: "faculty",
                 type: "string",
-=======
->>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
             },
         ],
         stateMutability: "view",
@@ -199,6 +314,21 @@ export const abi = [
         name: "getMyStudentInfo",
         outputs: [
             {
+                internalType: "uint256",
+                name: "studentId",
+                type: "uint256",
+            },
+            {
+                internalType: "string",
+                name: "name",
+                type: "string",
+            },
+            {
+                internalType: "string",
+                name: "className",
+                type: "string",
+            },
+            {
                 internalType: "string",
                 name: "faculty",
                 type: "string",
@@ -220,6 +350,86 @@ export const abi = [
                 internalType: "bool",
                 name: "",
                 type: "bool",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "proposalPassed",
+        outputs: [
+            {
+                internalType: "bool",
+                name: "",
+                type: "bool",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+            },
+        ],
+        name: "proposals",
+        outputs: [
+            {
+                internalType: "address",
+                name: "creator",
+                type: "address",
+            },
+            {
+                internalType: "uint256",
+                name: "timestamp",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "studyHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "expenses",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "exerciseHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "sleepHours",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "yesVotes",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "noVotes",
+                type: "uint256",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "proposalsCount",
+        outputs: [
+            {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
             },
         ],
         stateMutability: "view",
@@ -256,6 +466,25 @@ export const abi = [
     {
         inputs: [
             {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+            },
+        ],
+        name: "studentAddresses",
+        outputs: [
+            {
+                internalType: "address",
+                name: "",
+                type: "address",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
                 internalType: "address",
                 name: "",
                 type: "address",
@@ -276,6 +505,11 @@ export const abi = [
             {
                 internalType: "string",
                 name: "className",
+                type: "string",
+            },
+            {
+                internalType: "string",
+                name: "faculty",
                 type: "string",
             },
         ],
@@ -314,5 +548,40 @@ export const abi = [
         outputs: [],
         stateMutability: "nonpayable",
         type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "bool",
+                name: "_vote",
+                type: "bool",
+            },
+            {
+                internalType: "uint256",
+                name: "_proposalId",
+                type: "uint256",
+            },
+        ],
+        name: "vote",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "votingEndTime",
+        outputs: [
+            {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        stateMutability: "payable",
+        type: "receive",
     },
 ]

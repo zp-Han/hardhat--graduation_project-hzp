@@ -36,26 +36,38 @@
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { ethers } from "ethers"
-import { abi, contractAddress } from "../constants" // 导入合约地址和ABI
-
+import { abi, contractAddress } from "@/constants" // 导入合约地址和ABI
+const userAddress = ref(''); // 存储当前钱包地址
+const adminAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // 管理员地址
+let isAdmin = ref(false); // 是否是管理员
 const router = useRouter()
 const loginMsg = ref("通过 MetaMask 登录")
 
 async function login() {
     if (typeof window.ethereum !== "undefined") {
         try {
-            await window.ethereum.request({ method: "eth_requestAccounts" })
-            const provider = new ethers.providers.Web3Provider(window.ethereum)
-            const contract = new ethers.Contract(contractAddress, abi, provider)
-            const registered = await contract.isRegistered()
-
-            if (!registered) {
-                loginMsg.value = "未注册"
-            } else {
-                loginMsg.value = "已登录"
-                router.push("/main")
+            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+            userAddress.value = accounts[0]; // 获取用户账户地址
+            console.log(userAddress.value)
+            isAdmin.value = userAddress.value.toLowerCase() === adminAddress.toLowerCase();
+            if(isAdmin.value){
+                router.push('/admin')
             }
-        } catch (error) {
+            else{
+                const provider = new ethers.providers.Web3Provider(window.ethereum)
+                const signer = provider.getSigner()
+                const contract = new ethers.Contract(contractAddress, abi, signer)
+                let registered = await contract.isRegistered()
+                console.log(contract.isRegistered())
+                if (!registered) {
+                    loginMsg.value = "未注册"
+                } else {
+                    loginMsg.value = "已注册"
+                    router.push("/main")
+                }
+            }
+        } 
+        catch (error) {
             console.error(error)
             alert("发生错误，请查看控制台")
         }
@@ -63,6 +75,7 @@ async function login() {
         alert("请安装 MetaMask!")
     }
 }
+
 
 function register() {
     router.push("/accountRegistration")

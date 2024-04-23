@@ -2,12 +2,29 @@
 pragma solidity ^0.8.8;
 
 contract stuBehaviorInfoSys {
-    address public admin; // Contract administrator address
+    address public chairman; // Contract chairman address
+    uint public votingEndTime;
+    bool public proposalPassed;
+
+    struct Proposal {
+        address creator;
+        uint timestamp;
+        uint studyHours;
+        uint expenses;
+        uint exerciseHours;
+        uint sleepHours;
+        uint yesVotes;
+        uint noVotes;
+        mapping(address => bool) voted;
+    }
+
+    Proposal[] public proposals;
 
     struct Student {
         uint256 studentId;
         string name;
         string className;
+        string faculty; // Faculty information
     }
 
     struct Behavior {
@@ -19,12 +36,13 @@ contract stuBehaviorInfoSys {
     }
 
     struct StudentInfo {
-        string faculty;
-        uint[] behaviorTimestamps; // An array to keep track of behavior timestamps.
+        mapping(uint => bool) behaviorExists; // Mapping to track behavior existence
         mapping(uint => Behavior) behaviors; // Student behavior records, key is timestamp
+        uint[] behaviorTimestamps; // An array to keep track of behavior timestamps.
     }
 
     mapping(address => Student) public students; // Mapping from student address to Student information
+    mapping(uint256 => address) public studentAddresses; // Mapping from student ID to student address
     mapping(address => StudentInfo) private studentInfos; // Mapping from student address to StudentInfo
 
     event StudentRegistered(
@@ -44,13 +62,33 @@ contract stuBehaviorInfoSys {
         uint sleepHours
     );
 
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Only admin can perform this action");
+    event ProposalCreated(
+        uint indexed proposalId,
+        address indexed creator,
+        uint timestamp,
+        uint studyHours,
+        uint expenses,
+        uint exerciseHours,
+        uint sleepHours
+    );
+
+    event VotingEnded(uint indexed proposalId, bool proposalResult);
+
+    modifier onlyChairman() {
+        require(
+            msg.sender == chairman,
+            "Only chairman can perform this action"
+        );
+        _;
+    }
+
+    modifier onlyVotingTime() {
+        require(block.timestamp <= votingEndTime, "Voting has ended");
         _;
     }
 
     constructor() {
-        admin = msg.sender;
+        chairman = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     }
 
     // Student registration function
@@ -60,15 +98,25 @@ contract stuBehaviorInfoSys {
         string memory _className,
         string memory _faculty
     ) public {
-        students[msg.sender] = Student(_studentId, _name, _className);
-        studentInfos[msg.sender].faculty = _faculty;
-        emit StudentRegistered(
-            msg.sender,
+        address studentAddress = msg.sender; // 获取调用者的地址
+        students[studentAddress] = Student(
             _studentId,
             _name,
             _className,
             _faculty
         );
+        studentAddresses[_studentId] = studentAddress; // 记录学生地址
+        emit StudentRegistered(
+            studentAddress,
+            _studentId,
+            _name,
+            _className,
+            _faculty
+        );
+    }
+
+    function isRegistered() public view returns (bool) {
+        return students[msg.sender].studentId != 0;
     }
 
     // Function to submit behavior records
@@ -79,27 +127,28 @@ contract stuBehaviorInfoSys {
         uint _exerciseHours,
         uint _sleepHours
     ) public {
-        require(students[msg.sender].studentId != 0, "Student not registered");
+        address studentAddress = msg.sender;
+        require(
+            students[studentAddress].studentId != 0,
+            "Student not registered"
+        );
+        require(
+            !studentInfos[studentAddress].behaviorExists[_timestamp],
+            "Behavior info already exists for the given timestamp"
+        );
 
-        StudentInfo storage info = studentInfos[msg.sender];
-        for (uint i = 0; i < info.behaviorTimestamps.length; i++) {
-            require(
-                info.behaviorTimestamps[i] != _timestamp,
-                "Behavior info already exists for the given timestamp"
-            );
-        }
-
-        info.behaviors[_timestamp] = Behavior(
+        studentInfos[studentAddress].behaviors[_timestamp] = Behavior(
             _timestamp,
             _studyHours,
             _expenses,
             _exerciseHours,
             _sleepHours
         );
-        info.behaviorTimestamps.push(_timestamp);
+        studentInfos[studentAddress].behaviorExists[_timestamp] = true;
+        studentInfos[studentAddress].behaviorTimestamps.push(_timestamp);
 
         emit BehaviorSubmitted(
-            msg.sender,
+            studentAddress,
             _timestamp,
             _studyHours,
             _expenses,
@@ -108,22 +157,23 @@ contract stuBehaviorInfoSys {
         );
     }
 
-    // Function to change contract administrator
-    function changeAdmin(address _newAdmin) public onlyAdmin {
-        admin = _newAdmin;
+    // Function to change contract chairman
+    function changeChairman(address _newChairman) public onlyChairman {
+        chairman = _newChairman;
     }
 
-    // Function to delete student information (only callable by admin)
-    function deleteStudent(address _student) public onlyAdmin {
-        delete students[_student];
-        delete studentInfos[_student];
+    // Function to delete student information (only callable by chairman)
+    function deleteStudent(uint256 _studentId) public onlyChairman {
+        address studentAddress = studentAddresses[_studentId];
+        require(studentAddress != address(0), "Student not found");
+        delete students[studentAddress];
+        delete studentInfos[studentAddress];
     }
 
     // Get basic information of the caller
     function getMyBasicInfo()
         public
         view
-<<<<<<< HEAD
         returns (
             uint256 studentId,
             string memory name,
@@ -131,32 +181,42 @@ contract stuBehaviorInfoSys {
             string memory faculty
         )
     {
-        Student memory myInfo = students[msg.sender];
-        StudentInfo storage info = studentInfos[msg.sender];
+        address studentAddress = msg.sender;
+        Student memory myInfo = students[studentAddress];
         require(myInfo.studentId != 0, "You are not registered");
-        return (myInfo.studentId, myInfo.name, myInfo.className, info.faculty);
-=======
-        returns (uint256 studentId, string memory name, string memory className)
-    {
-        Student memory myInfo = students[msg.sender];
-        require(myInfo.studentId != 0, "You are not registered");
-        return (myInfo.studentId, myInfo.name, myInfo.className);
->>>>>>> 11a5e52abbae51ae09e845e7a5ba250548766eee
-    }
-
-    function isRegistered() public view returns (bool) {
-        return students[msg.sender].studentId != 0;
+        return (
+            myInfo.studentId,
+            myInfo.name,
+            myInfo.className,
+            myInfo.faculty
+        );
     }
 
     // Get detailed information and behavior timestamps of the caller
     function getMyStudentInfo()
         public
         view
-        returns (string memory faculty, uint[] memory behaviorTimestamps)
+        returns (
+            uint256 studentId,
+            string memory name,
+            string memory className,
+            string memory faculty,
+            uint[] memory behaviorTimestamps
+        )
     {
-        require(students[msg.sender].studentId != 0, "You are not registered");
-        StudentInfo storage info = studentInfos[msg.sender];
-        return (info.faculty, info.behaviorTimestamps);
+        address studentAddress = msg.sender;
+        require(
+            students[studentAddress].studentId != 0,
+            "You are not registered"
+        );
+        Student memory myInfo = students[studentAddress];
+        return (
+            myInfo.studentId,
+            myInfo.name,
+            myInfo.className,
+            myInfo.faculty,
+            studentInfos[studentAddress].behaviorTimestamps
+        );
     }
 
     // Get a specific behavior record of the caller by timestamp
@@ -173,8 +233,12 @@ contract stuBehaviorInfoSys {
             uint sleepHours
         )
     {
-        require(students[msg.sender].studentId != 0, "You are not registered");
-        Behavior storage behavior = studentInfos[msg.sender].behaviors[
+        address studentAddress = msg.sender;
+        require(
+            students[studentAddress].studentId != 0,
+            "You are not registered"
+        );
+        Behavior memory behavior = studentInfos[studentAddress].behaviors[
             _timestamp
         ];
         require(behavior.timestamp != 0, "Behavior not found");
@@ -185,5 +249,80 @@ contract stuBehaviorInfoSys {
             behavior.exerciseHours,
             behavior.sleepHours
         );
+    }
+
+    // Function to create proposal
+    function createProposal(
+        uint _timestamp,
+        uint _studyHours,
+        uint _expenses,
+        uint _exerciseHours,
+        uint _sleepHours
+    ) public {
+        Proposal storage newProposal = proposals.push();
+        newProposal.creator = msg.sender;
+        newProposal.timestamp = _timestamp;
+        newProposal.studyHours = _studyHours;
+        newProposal.expenses = _expenses;
+        newProposal.exerciseHours = _exerciseHours;
+        newProposal.sleepHours = _sleepHours;
+        newProposal.yesVotes = 0;
+        newProposal.noVotes = 0;
+
+        emit ProposalCreated(
+            proposals.length - 1,
+            msg.sender,
+            _timestamp,
+            _studyHours,
+            _expenses,
+            _exerciseHours,
+            _sleepHours
+        );
+    }
+
+    // Function to vote on a proposal
+    function vote(bool _vote, uint _proposalId) public onlyVotingTime {
+        require(
+            !proposals[_proposalId].voted[msg.sender],
+            "You have already voted for this proposal"
+        );
+        require(_proposalId < proposals.length, "Invalid proposal ID");
+
+        if (_vote) {
+            proposals[_proposalId].yesVotes++;
+        } else {
+            proposals[_proposalId].noVotes++;
+        }
+
+        proposals[_proposalId].voted[msg.sender] = true;
+    }
+
+    function proposalsCount() public view returns (uint) {
+        return proposals.length;
+    }
+
+    // * receive function
+    receive() external payable {}
+
+    // * fallback function
+    fallback() external payable {}
+
+    // Function to end voting on a proposal
+    function endVoting(uint _proposalId) public onlyChairman {
+        require(block.timestamp > votingEndTime, "Voting has not ended yet");
+        require(_proposalId < proposals.length, "Invalid proposal ID");
+
+        Proposal storage proposal = proposals[_proposalId];
+        uint totalVotes = proposal.yesVotes + proposal.noVotes;
+
+        if (totalVotes > 0) {
+            if (proposal.yesVotes > proposal.noVotes) {
+                proposalPassed = true;
+            } else {
+                proposalPassed = false;
+            }
+        }
+
+        emit VotingEnded(_proposalId, proposalPassed);
     }
 }

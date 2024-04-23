@@ -1,10 +1,14 @@
 import { createRouter, createWebHistory } from "vue-router" //引入createROouter
 import AccountRegistration from "@/pages/AccountRegistration.vue"
 import Login from "@/pages/Login.vue"
-import BehaviorSubmission from "@/pages/BehaviorSubmission.vue"
-import BehaviorVisualization from "@/pages/BehaviorVisualization.vue"
 import Main from "@/pages/Main.vue"
-import PersonInfomation from "@/pages/PersonInfomation.vue"
+import BehaviorSubmission from "@/pages/main/BehaviorSubmission.vue"
+import BehaviorVisualization from "@/pages/main/BehaviorVisualization.vue"
+import PersonInfomation from "@/pages/main/PersonInfomation.vue"
+import voteEvent from "@/pages/main/voteEvent.vue"
+import admin from "@/pages/Admin.vue"
+import deleteStu from "@/pages/admin/deleteStu.vue"
+import changeAdmin from "@/pages/admin/changeAdmin.vue"
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -38,6 +42,27 @@ const router = createRouter({
                     name: "PI",
                     path: "personInfomation ",
                     component: PersonInfomation,
+                },
+                {
+                    name: "VE",
+                    path: "voteEvent",
+                    component: voteEvent,
+                },
+            ],
+        },
+        {
+            path: "/admin",
+            component: admin,
+            children: [
+                {
+                    name: "DS",
+                    path: "deleteStu",
+                    component: deleteStu,
+                },
+                {
+                    name: "CA",
+                    path: "changeAdmin",
+                    component: changeAdmin,
                 },
             ],
         },
