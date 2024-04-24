@@ -53,7 +53,7 @@
           const contract = new ethers.Contract(contractAddress, abi, signer)
   
           try {
-              const info = await contract.getMyBasicInfo()
+              const info = await contract.getStudentInfo()
               stu.value.sId = info[0]
               stu.value.Name = info[1]
               stu.value.ClassName = info[2]

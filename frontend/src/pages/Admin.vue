@@ -7,6 +7,12 @@
             <v-list class=".v-list">
                 <v-list-item @click="CAshow" value="profile">修改管理员</v-list-item>
             </v-list>
+            <v-list class=".v-list">
+                <v-list-item @click="GTshow" value="profile">查看学生</v-list-item>
+            </v-list>
+            <!-- <v-list class=".v-list">
+                <v-list-item @click="CEshow" value="profile">今日提案</v-list-item>
+            </v-list> -->
         </v-navigation-drawer>
 
         <v-main>
@@ -28,7 +34,12 @@ function DSshow() {
 function CAshow() {
     router.push({name:'CA'});
 }
-
+function CEshow() {
+    router.push({name:'CE'});
+}
+function GTshow() {
+    router.push({name:'GT'});
+}
 
 </script>
 

@@ -9,6 +9,8 @@ import voteEvent from "@/pages/main/voteEvent.vue"
 import admin from "@/pages/Admin.vue"
 import deleteStu from "@/pages/admin/deleteStu.vue"
 import changeAdmin from "@/pages/admin/changeAdmin.vue"
+import checkEvent from "@/pages/admin/checkEvent.vue"
+import getStudent from "@/pages/admin/getStudent.vue"
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -63,6 +65,16 @@ const router = createRouter({
                     name: "CA",
                     path: "changeAdmin",
                     component: changeAdmin,
+                },
+                {
+                    name: "CE",
+                    path: "checkEvent",
+                    component: checkEvent,
+                },
+                {
+                    name: "GT",
+                    path: "getStudent",
+                    component: getStudent,
                 },
             ],
         },

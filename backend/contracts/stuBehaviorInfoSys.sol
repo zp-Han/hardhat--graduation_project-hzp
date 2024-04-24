@@ -2,48 +2,35 @@
 pragma solidity ^0.8.8;
 
 contract stuBehaviorInfoSys {
-    address public chairman; // Contract chairman address
-    uint public votingEndTime;
-    bool public proposalPassed;
-
-    struct Proposal {
-        address creator;
-        uint timestamp;
-        uint studyHours;
-        uint expenses;
-        uint exerciseHours;
-        uint sleepHours;
-        uint yesVotes;
-        uint noVotes;
-        mapping(address => bool) voted;
-    }
-
-    Proposal[] public proposals;
-
+    address public chairman; // 合约管理员地址
+    uint allStuCount = 0; //已经注册的学生数量
     struct Student {
-        uint256 studentId;
-        string name;
-        string className;
-        string faculty; // Faculty information
+        uint256 studentId; // 学生ID
+        string name; // 学生姓名
+        string className; // 班级名称
+        string faculty; // 学院信息
     }
 
     struct Behavior {
-        uint timestamp;
-        uint studyHours; // Study duration (hours)
-        uint expenses; // Expenses amount
-        uint exerciseHours; // Exercise duration (hours)
-        uint sleepHours; // Sleep duration (hours)
+        string studentName; // 学生姓名
+        uint timestamp; // 行为时间戳
+        uint studyHours; // 学习时间（小时）
+        uint expenses; // 开销
+        uint exerciseHours; // 运动时间（小时）
+        uint sleepHours; // 睡眠时间（小时）
+        uint allCount; // 总需要票数
+        uint yesCount; // 赞成票数
+        uint noCount; // 反对票数
+        bool finalized; // 行为是否已最终确认
+        bool behaviorPassed; // 行为是否通过
     }
-
-    struct StudentInfo {
-        mapping(uint => bool) behaviorExists; // Mapping to track behavior existence
-        mapping(uint => Behavior) behaviors; // Student behavior records, key is timestamp
-        uint[] behaviorTimestamps; // An array to keep track of behavior timestamps.
-    }
-
-    mapping(address => Student) public students; // Mapping from student address to Student information
-    mapping(uint256 => address) public studentAddresses; // Mapping from student ID to student address
-    mapping(address => StudentInfo) private studentInfos; // Mapping from student address to StudentInfo
+    mapping(string => mapping(uint => mapping(address => bool)))
+        public hasVoted; // 记录每个学生对于每个行为是否已经投票
+    mapping(address => Student) public students; // 学生地址到学生信息的映射
+    mapping(address => mapping(address => Behavior)) private studentInfos; // 学生地址到学生行为信息的映射
+    mapping(uint256 => address) public studentAddresses; //学生ID到学生地址的映射
+    mapping(string => Behavior[]) public classBehaviorsMapping; // 班级到行为的映射
+    mapping(string => uint) public classStudentCounts; // 班级到学生数量的映射
 
     event StudentRegistered(
         address indexed student,
@@ -55,57 +42,45 @@ contract stuBehaviorInfoSys {
 
     event BehaviorSubmitted(
         address indexed student,
+        string studentName,
         uint timestamp,
         uint studyHours,
         uint expenses,
         uint exerciseHours,
-        uint sleepHours
+        uint sleepHours,
+        uint allCount,
+        uint yesCount, // 赞成票数
+        uint noCount, // 反对票数
+        bool finalized,
+        bool behaviorPassed
     );
-
-    event ProposalCreated(
-        uint indexed proposalId,
-        address indexed creator,
-        uint timestamp,
-        uint studyHours,
-        uint expenses,
-        uint exerciseHours,
-        uint sleepHours
-    );
-
-    event VotingEnded(uint indexed proposalId, bool proposalResult);
 
     modifier onlyChairman() {
-        require(
-            msg.sender == chairman,
-            "Only chairman can perform this action"
-        );
-        _;
-    }
-
-    modifier onlyVotingTime() {
-        require(block.timestamp <= votingEndTime, "Voting has ended");
+        require(msg.sender == chairman, "Only by admin");
         _;
     }
 
     constructor() {
-        chairman = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        chairman = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266; // 部署合约的地址为管理员地址
     }
 
-    // Student registration function
+    // 学生注册函数
     function register(
         uint _studentId,
         string memory _name,
         string memory _className,
         string memory _faculty
     ) public {
-        address studentAddress = msg.sender; // 获取调用者的地址
-        students[studentAddress] = Student(
-            _studentId,
-            _name,
-            _className,
-            _faculty
-        );
-        studentAddresses[_studentId] = studentAddress; // 记录学生地址
+        require(!isRegistered(), "Already registered");
+
+        address studentAddress = msg.sender;
+        students[studentAddress].studentId = _studentId;
+        students[studentAddress].name = _name;
+        students[studentAddress].className = _className;
+        students[studentAddress].faculty = _faculty;
+        studentAddresses[_studentId] = studentAddress;
+        classStudentCounts[_className]++;
+        allStuCount++;
         emit StudentRegistered(
             studentAddress,
             _studentId,
@@ -115,11 +90,12 @@ contract stuBehaviorInfoSys {
         );
     }
 
+    // 判断是否已注册
     function isRegistered() public view returns (bool) {
         return students[msg.sender].studentId != 0;
     }
 
-    // Function to submit behavior records
+    // 提交行为记录函数
     function submitBehavior(
         uint _timestamp,
         uint _studyHours,
@@ -127,51 +103,30 @@ contract stuBehaviorInfoSys {
         uint _exerciseHours,
         uint _sleepHours
     ) public {
+        require(isRegistered(), "Student not registered");
+        string memory _studentName = students[msg.sender].name;
         address studentAddress = msg.sender;
-        require(
-            students[studentAddress].studentId != 0,
-            "Student not registered"
-        );
-        require(
-            !studentInfos[studentAddress].behaviorExists[_timestamp],
-            "Behavior info already exists for the given timestamp"
-        );
-
-        studentInfos[studentAddress].behaviors[_timestamp] = Behavior(
+        Behavior memory behavior = Behavior(
+            _studentName,
             _timestamp,
             _studyHours,
             _expenses,
             _exerciseHours,
-            _sleepHours
+            _sleepHours,
+            classStudentCounts[students[studentAddress].className],
+            0,
+            0,
+            false,
+            false
         );
-        studentInfos[studentAddress].behaviorExists[_timestamp] = true;
-        studentInfos[studentAddress].behaviorTimestamps.push(_timestamp);
+        studentInfos[studentAddress][studentAddress] = behavior;
 
-        emit BehaviorSubmitted(
-            studentAddress,
-            _timestamp,
-            _studyHours,
-            _expenses,
-            _exerciseHours,
-            _sleepHours
+        classBehaviorsMapping[students[studentAddress].className].push(
+            behavior
         );
     }
 
-    // Function to change contract chairman
-    function changeChairman(address _newChairman) public onlyChairman {
-        chairman = _newChairman;
-    }
-
-    // Function to delete student information (only callable by chairman)
-    function deleteStudent(uint256 _studentId) public onlyChairman {
-        address studentAddress = studentAddresses[_studentId];
-        require(studentAddress != address(0), "Student not found");
-        delete students[studentAddress];
-        delete studentInfos[studentAddress];
-    }
-
-    // Get basic information of the caller
-    function getMyBasicInfo()
+    function getStudentInfo()
         public
         view
         returns (
@@ -182,44 +137,19 @@ contract stuBehaviorInfoSys {
         )
     {
         address studentAddress = msg.sender;
-        Student memory myInfo = students[studentAddress];
-        require(myInfo.studentId != 0, "You are not registered");
-        return (
-            myInfo.studentId,
-            myInfo.name,
-            myInfo.className,
-            myInfo.faculty
-        );
-    }
-
-    // Get detailed information and behavior timestamps of the caller
-    function getMyStudentInfo()
-        public
-        view
-        returns (
-            uint256 studentId,
-            string memory name,
-            string memory className,
-            string memory faculty,
-            uint[] memory behaviorTimestamps
-        )
-    {
-        address studentAddress = msg.sender;
+        students[studentAddress];
         require(
             students[studentAddress].studentId != 0,
             "You are not registered"
         );
-        Student memory myInfo = students[studentAddress];
         return (
-            myInfo.studentId,
-            myInfo.name,
-            myInfo.className,
-            myInfo.faculty,
-            studentInfos[studentAddress].behaviorTimestamps
+            students[studentAddress].studentId,
+            students[studentAddress].name,
+            students[studentAddress].className,
+            students[studentAddress].faculty
         );
     }
 
-    // Get a specific behavior record of the caller by timestamp
     function getMyBehavior(
         uint _timestamp
     )
@@ -238,91 +168,140 @@ contract stuBehaviorInfoSys {
             students[studentAddress].studentId != 0,
             "You are not registered"
         );
-        Behavior memory behavior = studentInfos[studentAddress].behaviors[
-            _timestamp
+        Behavior[] memory behaviors = classBehaviorsMapping[
+            students[studentAddress].className
         ];
-        require(behavior.timestamp != 0, "Behavior not found");
-        return (
-            behavior.timestamp,
-            behavior.studyHours,
-            behavior.expenses,
-            behavior.exerciseHours,
-            behavior.sleepHours
-        );
-    }
-
-    // Function to create proposal
-    function createProposal(
-        uint _timestamp,
-        uint _studyHours,
-        uint _expenses,
-        uint _exerciseHours,
-        uint _sleepHours
-    ) public {
-        Proposal storage newProposal = proposals.push();
-        newProposal.creator = msg.sender;
-        newProposal.timestamp = _timestamp;
-        newProposal.studyHours = _studyHours;
-        newProposal.expenses = _expenses;
-        newProposal.exerciseHours = _exerciseHours;
-        newProposal.sleepHours = _sleepHours;
-        newProposal.yesVotes = 0;
-        newProposal.noVotes = 0;
-
-        emit ProposalCreated(
-            proposals.length - 1,
-            msg.sender,
-            _timestamp,
-            _studyHours,
-            _expenses,
-            _exerciseHours,
-            _sleepHours
-        );
-    }
-
-    // Function to vote on a proposal
-    function vote(bool _vote, uint _proposalId) public onlyVotingTime {
-        require(
-            !proposals[_proposalId].voted[msg.sender],
-            "You have already voted for this proposal"
-        );
-        require(_proposalId < proposals.length, "Invalid proposal ID");
-
-        if (_vote) {
-            proposals[_proposalId].yesVotes++;
-        } else {
-            proposals[_proposalId].noVotes++;
+        for (uint i = 0; i < behaviors.length; i++) {
+            require(behaviors[i].behaviorPassed = true, "behavior not pass");
+            if (behaviors[i].timestamp == _timestamp) {
+                return (
+                    behaviors[i].timestamp,
+                    behaviors[i].studyHours,
+                    behaviors[i].expenses,
+                    behaviors[i].exerciseHours,
+                    behaviors[i].sleepHours
+                );
+            }
         }
 
-        proposals[_proposalId].voted[msg.sender] = true;
+        revert("Behavior not found");
     }
 
-    function proposalsCount() public view returns (uint) {
-        return proposals.length;
+    // 获取班级对应的行为
+    function getBehaviors() public view returns (Behavior[] memory) {
+        return classBehaviorsMapping[students[msg.sender].className];
     }
 
-    // * receive function
+    // 获取行为状态
+    function getBehaviorState(
+        string memory _className,
+        uint _index
+    ) public view returns (bool finalized, bool behaviorPassed) {
+        require(
+            _index < classBehaviorsMapping[_className].length,
+            "Invalid behavior index"
+        );
+        Behavior storage behavior = classBehaviorsMapping[_className][_index];
+        return (behavior.finalized, behavior.behaviorPassed);
+    }
+
+    // 投票函数
+    function vote(
+        bool _vote,
+        string memory _studentName,
+        string memory _className
+    ) public {
+        require(isRegistered(), "Student not registered");
+        uint index = findBehaviorIndex(_studentName, _className);
+        require(index != type(uint).max, "Behavior not found");
+        Behavior storage behavior = classBehaviorsMapping[_className][index];
+        require(!behavior.finalized, "Behavior has already been finalized");
+        require(
+            !hasVoted[students[msg.sender].className][index][msg.sender],
+            "Already voted!"
+        );
+        if (_vote) {
+            behavior.yesCount++;
+        } else {
+            behavior.noCount++;
+        }
+        hasVoted[students[msg.sender].className][index][msg.sender] = true;
+        // Check if all classmates voted
+        uint totalVotes = getClassmateCount(_className);
+        if (behavior.yesCount + behavior.noCount == totalVotes) {
+            if (behavior.yesCount > behavior.noCount) {
+                behavior.finalized = true;
+                behavior.behaviorPassed = true;
+            } else {
+                behavior.finalized = true;
+                behavior.behaviorPassed = false;
+                // Remove behavior if proposal not passed
+            }
+        }
+    }
+
+    // 辅助函数：获取班级同学数
+    function getClassmateCount(
+        string memory _className
+    ) internal view returns (uint) {
+        return classStudentCounts[_className];
+    }
+
+    // 辅助函数：查找行为索引
+    function findBehaviorIndex(
+        string memory _studentName,
+        string memory _className
+    ) public view returns (uint) {
+        Behavior[] storage behaviors = classBehaviorsMapping[_className];
+        for (uint i = 0; i < behaviors.length; i++) {
+            if (
+                keccak256(abi.encodePacked(behaviors[i].studentName)) ==
+                keccak256(abi.encodePacked(_studentName))
+            ) {
+                return i;
+            }
+        }
+        return type(uint).max;
+    }
+
+    function changeChairman(address _newChairman) public onlyChairman {
+        chairman = _newChairman;
+    }
+
+    function deleteStudent(uint256 _studentId) public onlyChairman {
+        address studentAddress = studentAddresses[_studentId];
+        string memory className = students[studentAddress].className;
+        delete students[studentAddress];
+        delete studentAddresses[_studentId];
+        classStudentCounts[className]--;
+        allStuCount--;
+    }
+
+    function getAllStuCount() public view returns (uint) {
+        return allStuCount;
+    }
+
+    function getStudentInfoById(
+        uint256 _studentId
+    )
+        public
+        view
+        returns (
+            string memory name,
+            string memory className,
+            string memory faculty
+        )
+    {
+        address studentAddress = studentAddresses[_studentId];
+        return (
+            students[studentAddress].name,
+            students[studentAddress].className,
+            students[studentAddress].faculty
+        );
+    }
+
     receive() external payable {}
 
     // * fallback function
     fallback() external payable {}
-
-    // Function to end voting on a proposal
-    function endVoting(uint _proposalId) public onlyChairman {
-        require(block.timestamp > votingEndTime, "Voting has not ended yet");
-        require(_proposalId < proposals.length, "Invalid proposal ID");
-
-        Proposal storage proposal = proposals[_proposalId];
-        uint totalVotes = proposal.yesVotes + proposal.noVotes;
-
-        if (totalVotes > 0) {
-            if (proposal.yesVotes > proposal.noVotes) {
-                proposalPassed = true;
-            } else {
-                proposalPassed = false;
-            }
-        }
-
-        emit VotingEnded(_proposalId, proposalPassed);
-    }
 }
