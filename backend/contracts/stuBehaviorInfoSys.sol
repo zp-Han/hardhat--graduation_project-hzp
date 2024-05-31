@@ -24,10 +24,16 @@ contract stuBehaviorInfoSys {
         bool finalized; // 行为是否已最终确认
         bool behaviorPassed; // 行为是否通过
     }
+    struct notice {
+        uint timestamp;
+        string info;
+    }
+
+    notice[] public notices;
     mapping(string => mapping(uint => mapping(address => bool)))
         public hasVoted; // 记录每个学生对于每个行为是否已经投票
     mapping(address => Student) public students; // 学生地址到学生信息的映射
-    mapping(address => mapping(address => Behavior)) private studentInfos; // 学生地址到学生行为信息的映射
+    mapping(address => Behavior) public studentBehaviors; // 学生地址到学生行为信息的映射
     mapping(uint256 => address) public studentAddresses; //学生ID到学生地址的映射
     mapping(string => Behavior[]) public classBehaviorsMapping; // 班级到行为的映射
     mapping(string => uint) public classStudentCounts; // 班级到学生数量的映射
@@ -119,7 +125,7 @@ contract stuBehaviorInfoSys {
             false,
             false
         );
-        studentInfos[studentAddress][studentAddress] = behavior;
+        studentBehaviors[studentAddress] = behavior;
 
         classBehaviorsMapping[students[studentAddress].className].push(
             behavior
@@ -165,15 +171,19 @@ contract stuBehaviorInfoSys {
     {
         address studentAddress = msg.sender;
         require(
-            students[studentAddress].studentId != 0,
+            students[studentAddress].studentId != 0 || msg.sender == chairman,
             "You are not registered"
         );
         Behavior[] memory behaviors = classBehaviorsMapping[
             students[studentAddress].className
         ];
         for (uint i = 0; i < behaviors.length; i++) {
-            require(behaviors[i].behaviorPassed = true, "behavior not pass");
-            if (behaviors[i].timestamp == _timestamp) {
+            require(behaviors[i].behaviorPassed == true, "behavior not pass");
+            if (
+                behaviors[i].timestamp == _timestamp &&
+                (keccak256(abi.encodePacked(behaviors[i].studentName)) ==
+                    keccak256(abi.encodePacked(students[msg.sender].name)))
+            ) {
                 return (
                     behaviors[i].timestamp,
                     behaviors[i].studyHours,
@@ -190,6 +200,12 @@ contract stuBehaviorInfoSys {
     // 获取班级对应的行为
     function getBehaviors() public view returns (Behavior[] memory) {
         return classBehaviorsMapping[students[msg.sender].className];
+    }
+
+    function GetBehaviors(
+        string memory _clsaaName
+    ) public view onlyChairman returns (Behavior[] memory) {
+        return classBehaviorsMapping[_clsaaName];
     }
 
     // 获取行为状态
@@ -282,22 +298,31 @@ contract stuBehaviorInfoSys {
     }
 
     function getStudentInfoById(
-        uint256 _studentId
+        uint256 studentId
     )
         public
         view
-        returns (
-            string memory name,
-            string memory className,
-            string memory faculty
-        )
+        returns (string memory, string memory, string memory, Behavior memory)
     {
-        address studentAddress = studentAddresses[_studentId];
+        address studentAddress = studentAddresses[studentId];
         return (
             students[studentAddress].name,
             students[studentAddress].className,
-            students[studentAddress].faculty
+            students[studentAddress].faculty,
+            studentBehaviors[studentAddress]
         );
+    }
+
+    function setNotice(
+        uint _timestamp,
+        string memory _info
+    ) public onlyChairman {
+        notice memory newnotice = notice(_timestamp, _info);
+        notices.push(newnotice);
+    }
+
+    function getnotice() public view returns (notice[] memory _notices) {
+        _notices = notices;
     }
 
     receive() external payable {}

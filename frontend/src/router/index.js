@@ -11,6 +11,8 @@ import deleteStu from "@/pages/admin/deleteStu.vue"
 import changeAdmin from "@/pages/admin/changeAdmin.vue"
 import checkEvent from "@/pages/admin/checkEvent.vue"
 import getStudent from "@/pages/admin/getStudent.vue"
+import noticeControl from "@/pages/admin/noticeControl.vue"
+import notice from "@/pages/main/notice.vue"
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -50,6 +52,11 @@ const router = createRouter({
                     path: "voteEvent",
                     component: voteEvent,
                 },
+                {
+                    name: "notice",
+                    path: "notice",
+                    component: notice,
+                },
             ],
         },
         {
@@ -70,6 +77,11 @@ const router = createRouter({
                     name: "CE",
                     path: "checkEvent",
                     component: checkEvent,
+                },
+                {
+                    name: "NC",
+                    path: "noticeControl",
+                    component: noticeControl,
                 },
                 {
                     name: "GT",

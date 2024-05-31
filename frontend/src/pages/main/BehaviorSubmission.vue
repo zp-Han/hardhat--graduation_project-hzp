@@ -74,6 +74,15 @@ function getNowTime() {
 }
 
 async function submitBehavior() {
+  // 计算时间总和
+  const totalHours = Number(behavior.value.studyHours) + Number(behavior.value.exerciseHours) + Number(behavior.value.sleepHours);
+  
+  // 验证时间总和是否超过24小时
+  if (totalHours > 24) {
+    alert("时间输入不合格");
+    return; // 如果超过24小时，停止提交
+  }
+
   if (typeof window.ethereum !== "undefined") {
     await window.ethereum.request({ method: "eth_requestAccounts" });
     const provider = new ethers.providers.Web3Provider(window.ethereum);

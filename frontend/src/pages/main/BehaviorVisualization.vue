@@ -43,6 +43,7 @@ async function getBehavior() {
       }
     } catch (error) {
       console.error(error);
+      alert('行为不存在或者行为尚未验证');
       return null;
     }
   }

@@ -22,9 +22,27 @@
             <v-list v-if="studentInfo">
               <v-list-item>
                 <v-list-item-content>
-                  <v-list-item-title class="text-name">Name: {{ studentInfo.name }}</v-list-item-title>
-                  <v-list-item-subtitle class="text-subtitle">Class: {{ studentInfo.className }}</v-list-item-subtitle>
-                  <v-list-item-subtitle class="text-subtitle">Faculty: {{ studentInfo.faculty }}</v-list-item-subtitle>
+                  <v-list-item-title class="text-subtitle">姓名：{{ studentInfo.name }}</v-list-item-title>
+                  <v-list-item-subtitle class="text-subtitle">班级：{{ studentInfo.className }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">学院：{{ studentInfo.faculty }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+            <v-divider></v-divider>
+            <v-list v-if="studentInfo && studentInfo.behavior">
+              <v-list-item>
+                <v-list-item-content>
+                  <v-list-item-subtitle class="text-subtitle">最新行为信息：</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">时间戳：{{ studentInfo.behavior.timestamp }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">学习小时数：{{ studentInfo.behavior.studyHours }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">花费：{{ studentInfo.behavior.expenses }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">锻炼小时数：{{ studentInfo.behavior.exerciseHours }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">睡眠小时数：{{ studentInfo.behavior.sleepHours }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">全部计数：{{ studentInfo.behavior.allCount }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">行为通过：{{ studentInfo.behavior.behaviorPassed }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">是否完成：{{ studentInfo.behavior.finalized }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">反对票：{{ studentInfo.behavior.noCount }}</v-list-item-subtitle>
+                  <v-list-item-subtitle class="text-subtitle">赞成票：{{ studentInfo.behavior.yesCount }}</v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
             </v-list>
@@ -42,7 +60,7 @@ import { ethers } from 'ethers';
 import { abi, contractAddress } from "@/constants";
 
 const studentId = ref('');
-const studentInfo = ref(null);
+const studentInfo = ref();
 const error = ref('');
 
 let provider = null;
@@ -68,15 +86,29 @@ const getCount = async () => {
 const getStudent = async () => {
   try {
     const student = await contract.getStudentInfoById(studentId.value);
+    console.log(student)
+    const behaviorArray = student[3];
     studentInfo.value = {
-      name: student.name,
-      className: student.className,
-      faculty: student.faculty
+      name: student[0],
+      className: student[1],
+      faculty: student[2],
+      behavior: {
+        timestamp: behaviorArray[1],
+        studyHours: behaviorArray[2],
+        expenses: behaviorArray[3],
+        exerciseHours: behaviorArray[4],
+        sleepHours: behaviorArray[5],
+        allCount: behaviorArray[0],
+        behaviorPassed: behaviorArray[10],
+        finalized: behaviorArray[9],
+        noCount: behaviorArray[8],
+        yesCount: behaviorArray[7]
+      }
     };
     error.value = '';
   } catch (e) {
     studentInfo.value = null;
-    error.value = 'Error retrieving student info';
+    error.value = '获取学生信息时出错';
     console.error(e);
   }
 };

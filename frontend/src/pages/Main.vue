@@ -6,6 +6,7 @@
                 <v-list-item @click="BSshow" value="submit">提交行为信息</v-list-item>
                 <v-list-item @click="BVshow" value="view">查看行为信息</v-list-item>
                 <v-list-item @click="VEshow" value="view">验证</v-list-item>
+                <v-list-item @click="noticeshow" value="view">公告</v-list-item>
             </v-list>
         </v-navigation-drawer>
 
@@ -36,6 +37,9 @@ function PIshow() {
 
 function VEshow() {
     router.push({name:'VE'});
+}
+function noticeshow() {
+    router.push({name:'notice'});
 }
 
 </script>
